@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CapitalTrack Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: radial-gradient(circle at top, #231242 0%, #050505 50%);
+            background-attachment: fixed;
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card-solid {
+            background: #14111d; 
+            border: 1px solid #2d2442; 
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        .card-solid:hover { border-color: #5b438c; background: #181423; }
+
+        .btn-primary { 
+            background: linear-gradient(135deg, #7c3aed 0%, #b829ff 100%); 
+            color: #ffffff; 
+            box-shadow: 0 4px 15px rgba(184, 41, 255, 0.3); 
+            border: none;
+        }
+        .btn-primary:active { transform: scale(0.95); }
+
+        .text-accent { color: #dcb3ff; } 
+        .border-accent { border-color: #b829ff; }
+
+        .header-bg { 
+            background: rgba(5, 5, 5, 0.85); 
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(184, 41, 255, 0.15); 
+        }
+        
+        input { 
+            background-color: #0b0a10 !important; 
+            border: 1px solid #2d2442 !important; 
+            color: #ffffff !important; 
+            border-radius: 0.75rem;
+        }
+        input:focus { 
+            border-color: #b829ff !important; 
+            box-shadow: 0 0 0 2px rgba(184, 41, 255, 0.2) !important; 
+            outline: none;
+        }
+
+        .loader { border-top-color: #b829ff; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* MEJORA UX: Animación suave de entrada para cambio de pantallas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animar-pantalla {
+            animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2d2442; border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased pb-24 h-screen overflow-x-hidden">
+    
+    <div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] space-y-2 pointer-events-none w-full max-w-xs px-4"></div>
+
+    <div class="header-bg p-5 sticky top-0 z-50 flex justify-between items-center">
+        <h1 class="text-xl font-black tracking-tight cursor-pointer" onclick="cambiarPantalla('home')">CAPITAL<span style="color: #b829ff;" class="font-light">TRACK</span></h1>
+        <button onclick="cambiarPantalla('home')" class="bg-[#1c182b] hover:bg-[#2d2442] border border-[#3b2e59] px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors text-gray-300">Inicio</button>
+    </div>
+
+    <div id="indicador-nube" class="bg-[#1c112e] text-[#dcb3ff] text-center text-[10px] font-bold py-2 tracking-widest uppercase flex items-center justify-center gap-2 border-b border-[#3b2e59] transition-all duration-500">
+        <div class="w-3 h-3 border-2 border-[#b829ff] rounded-full loader"></div>
+        Sincronizando Nube...
+    </div>
+
+    <div class="w-full max-w-md mx-auto p-4 mt-2">
+
+        <div id="pantalla-home" class="pantalla block space-y-4">
+            <div class="grid grid-cols-2 gap-3 mb-6 mt-2">
+                <div class="card-solid p-5 flex flex-col justify-center border-l-4 border-l-[#b829ff]">
+                    <span class="block text-[9px] uppercase font-bold tracking-widest text-gray-400 mb-1">Capital en Calle</span>
+                    <span id="dash-capital" class="block text-2xl font-black text-white tracking-tight">$ 0</span>
+                </div>
+                <div class="card-solid p-5 flex flex-col justify-center border-l-4 border-l-[#7c3aed]">
+                    <span class="block text-[9px] uppercase font-bold tracking-widest text-gray-400 mb-1">Cobro Mensual</span>
+                    <span id="dash-interes" class="block text-2xl font-black text-white tracking-tight">$ 0</span>
+                </div>
+            </div>
+
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest px-1 mt-6 mb-2">Operaciones</h3>
+
+            <button onclick="cambiarPantalla('nuevo')" class="w-full card-solid p-4 flex items-center gap-4 active:scale-95 group">
+                <div class="w-12 h-12 rounded-xl btn-primary flex items-center justify-center text-xl">➕</div>
+                <div class="text-left flex-1">
+                    <span class="block font-black text-lg text-white">Alta Préstamo</span>
+                    <span class="block text-[10px] text-gray-400 font-semibold mt-0.5 uppercase tracking-wider">Nuevo Capital 🔒</span>
+                </div>
+                <div class="text-[#5b438c] text-xl font-bold group-hover:text-[#b829ff] transition-colors">›</div>
+            </button>
+
+            <button onclick="cambiarPantalla('socios')" class="w-full card-solid p-4 flex items-center gap-4 active:scale-95 group">
+                <div class="w-12 h-12 rounded-xl bg-[#231b38] border border-[#3b2e59] flex items-center justify-center text-[#b829ff] text-xl group-hover:bg-[#2d2442] transition-colors">👥</div>
+                <div class="text-left flex-1">
+                    <span class="block font-black text-lg text-white">Cartera de Socios</span>
+                    <span class="block text-[10px] text-gray-400 font-semibold mt-0.5 uppercase tracking-wider">Gestionar cobros</span>
+                </div>
+                <div class="text-[#5b438c] text-xl font-bold group-hover:text-[#b829ff] transition-colors">›</div>
+            </button>
+
+            <button onclick="renderizarCuadroTotal(); cambiarPantalla('total')" class="w-full card-solid p-4 flex items-center gap-4 active:scale-95 group">
+                <div class="w-12 h-12 rounded-xl bg-[#231b38] border border-[#3b2e59] flex items-center justify-center text-[#b829ff] text-xl group-hover:bg-[#2d2442] transition-colors">📊</div>
+                <div class="text-left flex-1">
+                    <span class="block font-black text-lg text-white">Consolidado</span>
+                    <span class="block text-[10px] text-gray-400 font-semibold mt-0.5 uppercase tracking-wider">Reporte general</span>
+                </div>
+                <div class="text-[#5b438c] text-xl font-bold group-hover:text-[#b829ff] transition-colors">›</div>
+            </button>
+        </div>
+
+        <div id="pantalla-nuevo" class="pantalla hidden">
+            <div class="card-solid p-6 relative overflow-hidden">
+                <h2 class="text-2xl font-black mb-4 text-white tracking-tight border-b border-[#2d2442] pb-3">Nueva Operación</h2>
+                
+                <div class="flex bg-[#0b0a10] p-1 rounded-xl border border-[#2d2442] mb-5">
+                    <button id="tab-prestamo" onclick="cambiarModoFormulario('prestamo')" type="button" class="flex-1 py-2 bg-[#1c182b] text-[#b829ff] border border-[#3b2e59] rounded-md font-black text-[10px] uppercase tracking-widest transition-all shadow-[0_0_10px_rgba(184,41,255,0.1)]">
+                        Préstamo Completo
+                    </button>
+                    <button id="tab-aporte" onclick="cambiarModoFormulario('aporte')" type="button" class="flex-1 py-2 text-gray-500 rounded-md font-bold text-[10px] uppercase tracking-widest transition-all hover:text-white">
+                        Solo Aporte Fijo
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Identificación del Socio</label>
+                        <input id="socio" type="text" placeholder="Ej: JUAN PEREZ" class="w-full p-3 font-black text-sm uppercase">
+                    </div>
+
+                    <div id="campos-prestamo" class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Capital a Otorgar</label>
+                            <input id="prestamo" type="text" placeholder="$ 0" inputmode="numeric" pattern="[0-9]*" onkeyup="formatearMonedaEnVivo(this, 'texto-monto'); autoCalcularCuota('')" class="w-full p-4 font-black text-2xl text-[#b829ff]">
+                            <p id="texto-monto" class="text-[9px] font-bold text-[#b829ff]/80 mt-1 uppercase min-h-[14px]"></p>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Interés (%)</label>
+                                <input id="interes" type="number" value="5" inputmode="numeric" pattern="[0-9]*" onkeyup="autoCalcularCuota('')" onchange="autoCalcularCuota('')" class="w-full p-3 font-black text-sm text-center">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Cuotas</label>
+                                <input id="cuotas" type="number" placeholder="Ej: 6" inputmode="numeric" pattern="[0-9]*" onkeyup="autoCalcularCuota('')" onchange="autoCalcularCuota('')" class="w-full p-3 font-black text-sm text-center">
+                            </div>
+                        </div>
+
+                        <div class="bg-[#1c182b] p-4 rounded-xl border border-[#3b2e59]">
+                            <label class="block text-[10px] font-bold text-[#dcb3ff] mb-2 uppercase tracking-widest">Cuota Mensual (Sugerida / Manual)</label>
+                            <input id="cuota-manual" type="text" placeholder="$ 0" inputmode="numeric" pattern="[0-9]*" onkeyup="formatearMonedaEnVivo(this, 'texto-cuota')" class="w-full p-3 font-black text-xl text-white border border-[#b829ff]/50 bg-[#0b0a10]">
+                            <p id="texto-cuota" class="text-[9px] font-bold text-[#b829ff]/80 mt-1 uppercase min-h-[14px]"></p>
+                            <p class="text-[8px] text-gray-500 mt-2">* Podés editar este número para redondear a tu gusto.</p>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-[#0b0a10] p-4 rounded-xl border border-[#2d2442]">
+                            <span class="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Aplicar Aporte ($300.000)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="aporte-toggle" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-[#1c182b] border border-[#2d2442] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-400 peer-checked:after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#b829ff] peer-checked:border-[#b829ff]"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="campos-solo-aporte" class="hidden bg-[#0b0a10] p-5 rounded-xl border border-dashed border-[#b829ff]/40 text-center space-y-2 transition-all">
+                        <span class="text-xl block">✔️</span>
+                        <h4 class="text-xs font-black text-[#dcb3ff] uppercase tracking-wider">Alta Simplificada de Socio</h4>
+                        <p class="text-[10px] text-gray-400 leading-relaxed font-semibold">Esta persona se registrará directamente en la cartera activa únicamente para la contribución del <span class="text-white font-bold">Aporte Fijo Mensual de $300.000</span>. No generará deuda de capital ni cálculo de cuotas finitas.</p>
+                    </div>
+
+                    <button id="btn-confirmar-operacion" onclick="pedirPin('crearPrestamo')" class="w-full btn-primary font-black text-sm py-4 rounded-xl uppercase tracking-widest mt-6">
+                        Confirmar Capital 🔒
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pantalla-socios" class="pantalla hidden">
+            <h2 class="text-2xl font-black mb-4 text-white tracking-tight px-1">Cartera Activa</h2>
+            
+            <div class="mb-4">
+                <input id="buscador-socios" type="text" oninput="buscarSocio()" placeholder="🔍 BUSCAR SOCIO EN CARTERA..." class="w-full p-3 font-bold text-xs uppercase tracking-wider bg-[#0b0a10] border border-[#2d2442] text-white rounded-xl outline-none focus:border-[#b829ff]">
+            </div>
+
+            <div id="lista-botones-socios" class="space-y-3"></div>
+        </div>
+
+        <div id="pantalla-detalle" class="pantalla hidden">
+            <button onclick="cambiarPantalla('socios')" class="mb-4 bg-[#14111d] px-4 py-2 rounded-lg text-gray-400 hover:text-white border border-[#2d2442] font-bold flex items-center gap-2 uppercase text-[10px] tracking-widest transition-all">
+                <span>← Volver</span>
+            </button>
+            <div id="contenedor-detalle-socio"></div>
+        </div>
+
+        <div id="pantalla-total" class="pantalla hidden">
+            <h2 class="text-2xl font-black mb-5 text-white tracking-tight px-1">Consolidado General</h2>
+            <div class="card-solid overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-[#0b0a10] border-b border-[#2d2442]">
+                            <tr>
+                                <th class="p-4 font-bold text-gray-500 uppercase tracking-widest text-[9px]">Socio</th>
+                                <th class="p-4 font-bold text-gray-500 uppercase tracking-widest text-[9px]">Capital</th>
+                                <th class="p-4 font-bold text-gray-500 uppercase tracking-widest text-[9px]">Cuota Base</th>
+                                <th class="p-4 font-bold text-gray-500 uppercase tracking-widest text-[9px]">Est.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpo-tabla-total" class="divide-y divide-[#1c182b]"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="modal-pin" class="hidden fixed inset-0 bg-[#000000]/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="card-solid p-8 max-w-sm w-full text-center border-[#3b2e59]">
+            <div class="text-4xl mb-4">🔒</div>
+            <h3 id="titulo-pin" class="text-xl font-black text-white mb-2 transition-colors">Seguridad</h3>
+            <p class="text-[11px] text-gray-400 font-semibold mb-6">Ingresa tu PIN para autorizar la acción.</p>
+            <input id="input-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" class="w-full text-center text-3xl tracking-[1em] font-black p-4 rounded-xl mb-6">
+            <div class="flex gap-3">
+                <button onclick="cerrarModalPin()" class="flex-1 py-3 rounded-xl bg-[#1c182b] text-gray-400 border border-[#2d2442] font-bold uppercase tracking-widest text-[10px]">Cancelar</button>
+                <button onclick="verificarPin()" class="flex-1 py-3 rounded-xl btn-primary font-black uppercase tracking-widest text-[10px]">Verificar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-editar" class="hidden fixed inset-0 bg-[#000000]/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="card-solid p-6 max-w-sm w-full border-[#b829ff]/50 shadow-[0_0_40px_rgba(184,41,255,0.15)] h-auto max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-black text-white mb-4 border-b border-[#2d2442] pb-3">Modificar Datos</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[9px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Socio</label>
+                    <input id="edit-socio" type="text" class="w-full p-3 font-black text-sm uppercase">
+                </div>
+                
+                <div id="contenedor-editables-prestamo" class="space-y-4">
+                    <div>
+                        <label class="block text-[9px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Capital</label>
+                        <input id="edit-prestamo" type="text" inputmode="numeric" pattern="[0-9]*" onkeyup="formatearMonedaEnVivo(this, 'edit-texto-monto'); autoCalcularCuota('edit-')" class="w-full p-3 font-black text-lg text-[#b829ff]">
+                        <p id="edit-texto-monto" class="text-[9px] font-bold text-[#b829ff]/80 mt-1 uppercase min-h-[14px]"></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="block text-[9px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Interés (%)</label>
+                            <input id="edit-interes" type="number" inputmode="numeric" pattern="[0-9]*" onkeyup="autoCalcularCuota('edit-')" onchange="autoCalcularCuota('edit-')" class="w-full p-3 font-black text-sm text-center">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-[9px] font-bold text-gray-400 mb-1 uppercase tracking-widest">Cuotas</label>
+                            <input id="edit-cuotas" type="number" inputmode="numeric" pattern="[0-9]*" onkeyup="autoCalcularCuota('edit-')" onchange="autoCalcularCuota('edit-')" class="w-full p-3 font-black text-sm text-center">
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1c182b] p-3 rounded-xl border border-[#3b2e59]">
+                        <label class="block text-[9px] font-bold text-[#dcb3ff] mb-1 uppercase tracking-widest">Cuota Mensual (Editable)</label>
+                        <input id="edit-cuota-manual" type="text" inputmode="numeric" pattern="[0-9]*" onkeyup="formatearMonedaEnVivo(this, 'edit-texto-cuota')" class="w-full p-3 font-black text-lg text-white bg-[#0b0a10]">
+                        <p id="edit-texto-cuota" class="text-[9px] font-bold text-[#b829ff]/80 mt-1 uppercase min-h-[14px]"></p>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-[#0b0a10] p-3 rounded-xl border border-[#2d2442]">
+                        <span class="text-[9px] font-bold text-gray-300 uppercase tracking-widest">Aporte ($300.000)</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="edit-aporte-toggle" class="sr-only peer">
+                            <div class="w-9 h-5 bg-[#1c182b] border border-[#2d2442] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-400 peer-checked:after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#b829ff] peer-checked:border-[#b829ff]"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="cerrarModalEditar()" class="flex-1 py-3 rounded-xl bg-[#1c182b] text-gray-400 border border-[#2d2442] font-bold uppercase tracking-widest text-[10px]">Cancelar</button>
+                <button onclick="guardarEdicion()" class="flex-1 py-3 rounded-xl btn-primary font-black uppercase tracking-widest text-[10px]">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBs9ftkHUB4Rj_CLKKG76Zl5kAEWqcT0U",
+            authDomain: "capitaltrack-df55e.firebaseapp.com",
+            projectId: "capitaltrack-df55e",
+            storageBucket: "capitaltrack-df55e.firebasestorage.app",
+            messagingSenderId: "15601782469",
+            appId: "1:15601782469:web:8997a81313c6e5a4aa7aac"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const PIN_SECRETO = "2314";
+        let prestamos = [];
+        let socioViendoId = null; 
+        let modoOperacionAlta = "prestamo"; // 'prestamo' o 'aporte'
+
+        onSnapshot(collection(db, "prestamos"), (snapshot) => {
+            prestamos = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
+            prestamos.sort((a, b) => b.createdAt - a.createdAt);
+            
+            const indicador = document.getElementById('indicador-nube');
+            indicador.className = "bg-[#050505] text-[#b829ff] text-center text-[10px] font-bold py-2 tracking-widest uppercase transition-all duration-500 border-b border-[#2d2442]";
+            indicador.innerHTML = "✔️ Conectado a la Nube";
+            setTimeout(() => { indicador.classList.add('hidden'); }, 2500);
+
+            actualizarDashboard();
+            const currentScreen = document.querySelector('.pantalla.block');
+            if(currentScreen) {
+                if(currentScreen.id === 'pantalla-socios') renderizarBotonesSocios();
+                if(currentScreen.id === 'pantalla-total') renderizarCuadroTotal();
+                if(currentScreen.id === 'pantalla-detalle' && socioViendoId) abrirFichaSocio(socioViendoId);
+            }
+        });
+
+        // MEJORA UX: Sistema de Toasts Personalizados Reemplazando Alerts Nativos
+        function mostrarToast(mensaje, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-xl shadow-2xl border text-xs font-bold uppercase tracking-wider flex items-center gap-2.5 transition-all duration-300 transform translate-y-10 opacity-0 bg-[#14111d] ${tipo === 'success' ? 'border-emerald-500 text-white shadow-[0_4px_20px_rgba(16,185,129,0.15)]' : 'border-red-500 text-white shadow-[0_4px_20px_rgba(239,68,68,0.15)]'}`;
+            toast.innerHTML = `<span>${tipo === 'success' ? '✔️' : '❌'}</span> <span>${mensaje}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // CONTROL UX: Manejador de las Pestañas Segmentadas
+        function cambiarModoFormulario(modo) {
+            modoOperacionAlta = modo;
+            const btnPrestamo = document.getElementById('tab-prestamo');
+            const btnAporte = document.getElementById('tab-aporte');
+            const camposPrestamo = document.getElementById('campos-prestamo');
+            const camposSoloAporte = document.getElementById('campos-solo-aporte');
+            const btnConfirmar = document.getElementById('btn-confirmar-operacion');
+
+            if (modo === 'prestamo') {
+                btnPrestamo.className = "flex-1 py-2 bg-[#1c182b] text-[#b829ff] border border-[#3b2e59] rounded-md font-black text-[10px] uppercase tracking-widest transition-all shadow-[0_0_10px_rgba(184,41,255,0.1)]";
+                btnAporte.className = "flex-1 py-2 text-gray-500 rounded-md font-bold text-[10px] uppercase tracking-widest transition-all hover:text-white";
+                camposPrestamo.classList.remove('hidden');
+                camposSoloAporte.classList.add('hidden');
+                btnConfirmar.innerHTML = 'Confirmar Capital 🔒';
+            } else {
+                btnAporte.className = "flex-1 py-2 bg-[#1c182b] text-[#b829ff] border border-[#3b2e59] rounded-md font-black text-[10px] uppercase tracking-widest transition-all shadow-[0_0_10px_rgba(184,41,255,0.1)]";
+                btnPrestamo.className = "flex-1 py-2 text-gray-500 rounded-md font-bold text-[10px] uppercase tracking-widest transition-all hover:text-white";
+                camposPrestamo.classList.add('hidden');
+                camposSoloAporte.classList.remove('hidden');
+                btnConfirmar.innerHTML = 'Confirmar Alta de Socio 🔒';
+            }
+        }
+
+        // INTERACCIÓN UX: Buscador local reactivo en Cartera de Socios
+        function buscarSocio() {
+            let query = document.getElementById('buscador-socios').value.toUpperCase();
+            let botones = document.querySelectorAll('#lista-botones-socios > button, #lista-botones-socios > div');
+            
+            botones.forEach(elemento => {
+                if(elemento.tagName === 'DIV') return; // Ignorar títulos de meses
+                let nombre = elemento.querySelector('span.text-white').innerText.toUpperCase();
+                if (nombre.includes(query)) {
+                    elemento.style.display = "flex";
+                } else {
+                    elemento.style.display = "none";
+                }
+            });
+        }
+
+        function autoCalcularCuota(prefix) {
+            let montoInput = document.getElementById(prefix + 'prestamo');
+            if(!montoInput) return;
+            let montoStr = montoInput.value.replace(/\D/g, "");
+            let monto = parseFloat(montoStr) || 0;
+            let cuotas = parseInt(document.getElementById(prefix + 'cuotas').value) || 0;
+            let interes = parseFloat(document.getElementById(prefix + 'interes').value) || 0;
+
+            if (monto > 0 && cuotas > 0) {
+                let interesDinero = monto * (interes / 100);
+                let cuotaBase = Math.round((monto / cuotas) + interesDinero); 
+                
+                let inputCuota = document.getElementById(prefix + 'cuota-manual');
+                let idTextoCuota = prefix === '' ? 'texto-cuota' : 'edit-texto-cuota';
+                
+                inputCuota.value = cuotaBase; 
+                formatearMonedaEnVivo(inputCuota, idTextoCuota);
+            }
+        }
+
+        function cambiarPantalla(pantallaId) {
+            document.querySelectorAll('.pantalla').forEach(p => { p.classList.add('hidden'); p.classList.remove('block', 'animar-pantalla'); });
+            const targetElement = document.getElementById('pantalla-' + pantallaId);
+            targetElement.classList.remove('hidden');
+            targetElement.classList.add('block', 'animar-pantalla');
+            
+            if(pantallaId === 'home') { socioViendoId = null; actualizarDashboard(); }
+            if(pantallaId === 'socios') {
+                document.getElementById('buscador-socios').value = '';
+                renderizarBotonesSocios();
+            }
+            if(pantallaId === 'nuevo') {
+                document.getElementById('socio').value = ''; document.getElementById('prestamo').value = '';
+                document.getElementById('cuotas').value = ''; document.getElementById('interes').value = '5';
+                document.getElementById('cuota-manual').value = ''; document.getElementById('aporte-toggle').checked = true;
+                if(document.getElementById('texto-monto')) document.getElementById('texto-monto').innerText = '';
+                if(document.getElementById('texto-cuota')) document.getElementById('texto-cuota').innerText = '';
+                cambiarModoFormulario('prestamo');
+            }
+        }
+
+        let accionPendiente = null; let idPendiente = null;
+
+        function pedirPin(accion, id = null) {
+            accionPendiente = accion; idPendiente = id; document.getElementById('input-pin').value = '';
+            const titulo = document.getElementById('titulo-pin'); const input = document.getElementById('input-pin');
+            titulo.innerText = "Seguridad"; titulo.style.color = "#ffffff";
+            input.style.borderColor = "#2d2442"; input.style.boxShadow = "none";
+            document.getElementById('modal-pin').classList.remove('hidden');
+            setTimeout(() => document.getElementById('input-pin').focus(), 100);
+        }
+
+        function cerrarModalPin() { document.getElementById('modal-pin').classList.add('hidden'); accionPendiente = null; idPendiente = null; }
+
+        function verificarPin() {
+            const intento = document.getElementById('input-pin').value;
+            const titulo = document.getElementById('titulo-pin'); const input = document.getElementById('input-pin');
+            if(intento === PIN_SECRETO) {
+                titulo.innerText = "✔️ Aprobado"; titulo.style.color = "#b829ff";
+                input.style.borderColor = "#b829ff"; input.style.boxShadow = "0 0 15px rgba(184, 41, 255, 0.4)";
+                setTimeout(() => { document.getElementById('modal-pin').classList.add('hidden'); ejecutarAccionProtegida(); }, 800);
+            } else {
+                titulo.innerText = "❌ Incorrecto"; titulo.style.color = "#ef4444"; input.style.borderColor = "#ef4444";
+                setTimeout(() => { titulo.innerText = "Seguridad"; titulo.style.color = "#ffffff"; input.style.borderColor = "#2d2442"; input.value = ''; input.focus(); }, 1200);
+            }
+        }
+
+        async function ejecutarAccionProtegida() {
+            try {
+                if(accionPendiente === 'crearPrestamo') { await procesarAgregarPrestamo(); cambiarPantalla('socios'); }
+                else if(accionPendiente === 'registrarPago') await procesarRegistrarPago(idPendiente);
+                else if(accionPendiente === 'editarSocio') abrirModalEditar(idPendiente);
+                else if(accionPendiente === 'borrarSocio') {
+                    if(confirm("¿Eliminar ficha de forma permanente?")) { await deleteDoc(doc(db, "prestamos", idPendiente)); cambiarPantalla('socios'); mostrarToast("Socio eliminado"); }
+                }
+            } catch (error) { mostrarToast("Error de conexión.", "error"); }
+            accionPendiente = null; idPendiente = null; document.getElementById('input-pin').value = '';
+        }
+
+        async function procesarAgregarPrestamo() {
+            const socio = document.getElementById('socio').value.toUpperCase();
+            if(!socio) return mostrarToast('Ingresá la identificación.', 'error');
+
+            let nuevoPrestamo = {};
+
+            if(modoOperacionAlta === 'aporte') {
+                // Estructura simplificada para Solo Aporte Fijo
+                nuevoPrestamo = {
+                    socio: socio,
+                    tipoSocio: 'aporte',
+                    monto: 0,
+                    interesPorcentaje: 0,
+                    interesGanancia: 0,
+                    cuotasTotales: 0,
+                    cuotasPagadas: 0,
+                    cuotaMensual: 0,
+                    aplicaAporte: true,
+                    fechaInicio: new Date().toLocaleDateString('es-AR'),
+                    historialPagos: [],
+                    createdAt: Date.now()
+                };
+            } else {
+                let montoStr = document.getElementById('prestamo').value.replace(/\D/g, "");
+                let cuotaManualStr = document.getElementById('cuota-manual').value.replace(/\D/g, "");
+                
+                const monto = parseFloat(montoStr);
+                const cuotas = parseInt(document.getElementById('cuotas').value);
+                const interesPorcentaje = parseFloat(document.getElementById('interes').value) || 0;
+                const cuotaFinalManual = parseFloat(cuotaManualStr);
+                const aplicaAporte = document.getElementById('aporte-toggle').checked;
+
+                if(isNaN(monto) || isNaN(cuotas) || isNaN(cuotaFinalManual)) return mostrarToast('Completá todos los datos numéricos.', 'error');
+
+                let interesDineroReal = cuotaFinalManual - (monto / cuotas);
+                if (interesDineroReal < 0) interesDineroReal = 0;
+
+                nuevoPrestamo = {
+                    socio: socio,
+                    tipoSocio: 'prestamo',
+                    monto: monto, 
+                    interesPorcentaje: interesPorcentaje, 
+                    interesGanancia: interesDineroReal, 
+                    cuotasTotales: cuotas, cuotasPagadas: 0, 
+                    cuotaMensual: cuotaFinalManual,
+                    aplicaAporte: aplicaAporte,     
+                    fechaInicio: new Date().toLocaleDateString('es-AR'), 
+                    historialPagos: [], createdAt: Date.now()
+                };
+            }
+
+            await addDoc(collection(db, "prestamos"), nuevoPrestamo);
+            mostrarToast("Registro guardado con éxito");
+        }
+
+        async function procesarRegistrarPago(id) {
+            const p = prestamos.find(x => x.firebaseId === id);
+            if(p) {
+                // Si es modo aporte, puede asentar infinitamente. Si es préstamo, controla el límite de cuotas
+                if(p.tipoSocio === 'aporte' || p.cuotasPagadas < p.cuotasTotales) {
+                    p.cuotasPagadas++; 
+                    p.historialPagos.push(new Date().toLocaleDateString('es-AR'));
+                    await updateDoc(doc(db, "prestamos", id), { cuotasPagadas: p.cuotasPagadas, historialPagos: p.historialPagos });
+                    mostrarToast("Pago asentado correctamente");
+                }
+            }
+        }
+
+        function abrirModalEditar(id) {
+            const p = prestamos.find(x => x.firebaseId === id); if(!p) return;
+            document.getElementById('modal-editar').dataset.editandoId = id;
+            document.getElementById('edit-socio').value = p.socio;
+            
+            const contenedorCamposPrestamo = document.getElementById('contenedor-editables-prestamo');
+
+            if(p.tipoSocio === 'aporte') {
+                contenedorCamposPrestamo.classList.add('hidden');
+            } else {
+                contenedorCamposPrestamo.classList.remove('hidden');
+                const inputPrestamo = document.getElementById('edit-prestamo'); 
+                inputPrestamo.value = Math.round(Number(p.monto)); 
+                formatearMonedaEnVivo(inputPrestamo, 'edit-texto-monto');
+                
+                document.getElementById('edit-cuotas').value = p.cuotasTotales;
+                document.getElementById('edit-interes').value = p.interesPorcentaje !== undefined ? p.interesPorcentaje : 5;
+                
+                const inputCuota = document.getElementById('edit-cuota-manual');
+                inputCuota.value = Math.round(Number(p.cuotaMensual)); 
+                formatearMonedaEnVivo(inputCuota, 'edit-texto-cuota');
+
+                document.getElementById('edit-aporte-toggle').checked = p.aplicaAporte !== false;
+            }
+
+            document.getElementById('modal-editar').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() { document.getElementById('modal-editar').classList.add('hidden'); }
+
+        async function guardarEdicion() {
+            const id = document.getElementById('modal-editar').dataset.editandoId; const p = prestamos.find(x => x.firebaseId === id); if(!p) return;
+            const nuevoSocio = document.getElementById('edit-socio').value.toUpperCase();
+            if(!nuevoSocio) return mostrarToast("Falta el nombre.", "error");
+
+            if(p.tipoSocio === 'aporte') {
+                await updateDoc(doc(db, "prestamos", id), { socio: nuevoSocio });
+            } else {
+                let montoStr = document.getElementById('edit-prestamo').value.replace(/\D/g, "");
+                let cuotaManualStr = document.getElementById('edit-cuota-manual').value.replace(/\D/g, "");
+
+                const nuevoMonto = parseFloat(montoStr); 
+                const nuevasCuotas = parseInt(document.getElementById('edit-cuotas').value);
+                const nuevoInteresPorcentaje = parseFloat(document.getElementById('edit-interes').value) || 0;
+                const nuevaCuotaManual = parseFloat(cuotaManualStr);
+                const nuevoAplicaAporte = document.getElementById('edit-aporte-toggle').checked;
+
+                if(isNaN(nuevoMonto) || isNaN(nuevasCuotas) || isNaN(nuevaCuotaManual)) return mostrarToast('Error en datos.', 'error');
+                
+                let nuevoInteresDineroReal = nuevaCuotaManual - (nuevoMonto / nuevasCuotas);
+                if (nuevoInteresDineroReal < 0) nuevoInteresDineroReal = 0;
+
+                await updateDoc(doc(db, "prestamos", id), { 
+                    socio: nuevoSocio, monto: nuevoMonto, cuotasTotales: nuevasCuotas, 
+                    interesPorcentaje: nuevoInteresPorcentaje, 
+                    interesGanancia: nuevoInteresDineroReal, 
+                    cuotaMensual: nuevaCuotaManual, aplicaAporte: nuevoAplicaAporte 
+                });
+            }
+            cerrarModalEditar();
+            mostrarToast("Edición guardada");
+        }
+
+        function actualizarDashboard() {
+            let cap = 0; let recaudoMensual = 0;
+            prestamos.forEach(p => { 
+                if(p.tipoSocio === 'aporte') {
+                    recaudoMensual += 300000;
+                } else {
+                    cap += p.monto; 
+                    if(p.cuotasPagadas < p.cuotasTotales) {
+                        let aporteExtra = (p.aplicaAporte !== false) ? 300000 : 0;
+                        recaudoMensual += (p.cuotaMensual + aporteExtra); 
+                    }
+                }
+            });
+            document.getElementById('dash-capital').innerText = formatearPlata(cap); 
+            document.getElementById('dash-interes').innerText = formatearPlata(recaudoMensual);
+        }
+
+        function renderizarBotonesSocios() {
+            const contenedor = document.getElementById('lista-botones-socios'); contenedor.innerHTML = '';
+            if (prestamos.length === 0) return contenedor.innerHTML = '<p class="text-gray-500 text-center text-sm font-bold mt-10">No hay socios activos.</p>';
+
+            let htmlFinal = ""; let mesActualRenderizado = "";
+            prestamos.forEach(p => {
+                const mesStr = p.fechaInicio.split('/').length === 3 ? ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][parseInt(p.fechaInicio.split('/')[1]) - 1] + " " + p.fechaInicio.split('/')[2] : "FECHA";
+                const mes = mesStr.toUpperCase();
+
+                if(mes !== mesActualRenderizado) {
+                    htmlFinal += `<div class="text-[#b829ff] text-[9px] font-black uppercase tracking-widest mt-6 mb-2 ml-1 border-b border-[#2d2442] pb-1 w-max">${mes}</div>`;
+                    mesActualRenderizado = mes;
+                }
+
+                const esSoloAporte = p.tipoSocio === 'aporte';
+                const fin = esSoloAporte ? false : p.cuotasPagadas >= p.cuotasTotales;
+                
+                const claseEstado = fin ? 'opacity-50 bg-[#0b0a10] border-[#1c182b]' : 'card-solid';
+                
+                // MEJORA UX: Píldora de estado con color personalizado para el tipo "Solo Aporte"
+                let textoPildora = esSoloAporte ? `APORTE (${p.cuotasPagadas})` : `${p.cuotasPagadas}/${p.cuotasTotales}`;
+                let colorPildora = esSoloAporte 
+                    ? 'bg-[#1a0b2e] text-[#dcb3ff] border-[#b829ff]/40 shadow-inner'
+                    : (fin ? 'bg-[#1c182b] text-gray-500 border-[#2d2442]' : 'bg-[#231b38] text-[#b829ff] border-[#3b2e59] shadow-inner');
+
+                htmlFinal += `
+                    <button onclick="abrirFichaSocio('${p.firebaseId}')" class="w-full p-4 rounded-xl flex justify-between items-center active:scale-95 transition-all mb-3 ${claseEstado}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-lg ${fin ? 'bg-[#1c182b] text-gray-600' : 'bg-[#1a1428] text-white border border-[#3b2e59]'} flex items-center justify-center font-black text-lg">${p.socio.charAt(0)}</div>
+                            <div class="text-left">
+                                <span class="block font-black text-base text-white">${p.socio}</span>
+                                <span class="block text-[11px] font-semibold text-gray-400 mt-0.5">${esSoloAporte ? 'Aporte Fijo Recurrente' : formatearPlata(p.monto)}</span>
+                            </div>
+                        </div>
+                        <span class="${colorPildora} px-3 py-1 rounded-md font-bold text-[10px] tracking-widest border">${textoPildora}</span>
+                    </button>
+                `;
+            });
+            contenedor.innerHTML = htmlFinal;
+        }
+
+        function abrirFichaSocio(id) {
+            socioViendoId = id; const p = prestamos.find(x => x.firebaseId === id); if(!p) { cambiarPantalla('socios'); return; }
+            const contenedor = document.getElementById('contenedor-detalle-socio'); 
+            
+            const esSoloAporte = p.tipoSocio === 'aporte';
+            const fin = esSoloAporte ? false : p.cuotasPagadas >= p.cuotasTotales;
+
+            let historialHTML = '';
+            if(p.historialPagos.length === 0) {
+                historialHTML = '<p class="text-gray-500 text-[11px] font-bold text-center py-4">Sin cobros registrados aún.</p>';
+            } else {
+                p.historialPagos.forEach((fecha, i) => {
+                    historialHTML += `<div class="border-b border-[#2d2442] py-3 flex justify-between items-center"><span class="text-gray-500 font-bold text-[9px] uppercase tracking-widest">Cobro de Mes (N° ${i + 1})</span> <span class="font-black text-white text-xs">${fecha}</span></div>`;
+                });
+            }
+
+            const llevaAporte = p.aplicaAporte !== false;
+            const totalAbonarNum = esSoloAporte ? 300000 : Math.round(Number(p.cuotaMensual) + (llevaAporte ? 300000 : 0));
+            const totalAbonarLetras = numeroALetras(totalAbonarNum);
+
+            contenedor.innerHTML = `
+                <div class="card-solid overflow-hidden">
+                    <div class="p-6 relative z-10 flex justify-between items-start border-b border-[#2d2442] bg-[#0b0a10]">
+                        <div>
+                            <h3 class="text-2xl font-black text-white tracking-tight mb-1">${p.socio}</h3>
+                            <p class="text-[9px] text-[#b829ff] uppercase tracking-widest font-bold">Iniciado: ${p.fechaInicio}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="pedirPin('editarSocio', '${p.firebaseId}')" class="text-gray-400 hover:text-white bg-[#1c182b] rounded-lg w-9 h-9 flex items-center justify-center transition-colors border border-[#2d2442]">✏️</button>
+                            <button onclick="pedirPin('borrarSocio', '${p.firebaseId}')" class="text-gray-400 hover:text-[#ef4444] bg-[#1c182b] rounded-lg w-9 h-9 flex items-center justify-center transition-colors border border-[#2d2442]">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-5">
+                        <div class="grid grid-cols-2 gap-3">
+                            
+                            ${esSoloAporte ? `
+                            <div class="bg-[#1a0b2e] p-4 rounded-xl border border-[#3b2e59] relative overflow-hidden flex flex-col justify-center col-span-2">
+                                <span class="text-[#dcb3ff] text-[8px] font-bold uppercase tracking-widest block mb-1">Modalidad de Cuenta</span>
+                                <span class="font-black text-base text-white uppercase tracking-wider">Abonado Fijo Recurrente</span>
+                                <div class="border-t border-[#3b2e59] pt-3 mt-3">
+                                    <span class="text-[#b829ff] text-[9px] font-bold uppercase tracking-widest block mb-0.5">Total a Abonar</span>
+                                    <span class="font-black text-2xl text-white drop-shadow-[0_0_10px_rgba(184,41,255,0.6)]">${formatearPlata(300000)}</span>
+                                    <span class="block text-gray-400 text-[7px] font-bold uppercase tracking-widest mt-1">${totalAbonarLetras}</span>
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="bg-[#0b0a10] p-4 rounded-xl border border-[#2d2442] flex flex-col justify-center">
+                                <span class="text-gray-500 text-[8px] font-bold uppercase tracking-widest block mb-1">Capital Otorgado</span>
+                                <span class="font-black text-base text-white">${formatearPlata(p.monto)}</span>
+                                <span class="text-gray-500 text-[8px] font-bold mt-2 border-t border-[#1c182b] pt-1">Interés Aplicado: ${p.interesPorcentaje !== undefined ? p.interesPorcentaje : 5}%</span>
+                            </div>
+                            
+                            <div class="bg-[#1a0b2e] p-4 rounded-xl border border-[#3b2e59] relative overflow-hidden flex flex-col justify-center">
+                                <span class="text-[#dcb3ff] text-[8px] font-bold uppercase tracking-widest block mb-1">Cuota Base</span>
+                                <span class="font-black text-xl text-white drop-shadow-[0_0_5px_rgba(184,41,255,0.4)]">${formatearPlata(p.cuotaMensual)}</span>
+                                
+                                ${llevaAporte ? `
+                                <div class="flex justify-between items-center bg-[#1c182b] px-2 py-1.5 rounded-md border border-[#3b2e59] mt-3 mb-3">
+                                    <span class="text-gray-400 text-[8px] font-bold uppercase tracking-widest">+ Aporte Mensual</span>
+                                    <span class="font-black text-[#dcb3ff] text-[10px]">$ 300.000</span>
+                                </div>
+                                ` : '<div class="mt-3 mb-3"></div>'}
+                                
+                                <div class="border-t border-[#3b2e59] pt-2">
+                                    <span class="text-[#b829ff] text-[9px] font-bold uppercase tracking-widest block mb-0.5">Total a Abonar</span>
+                                    <span class="font-black text-2xl text-white drop-shadow-[0_0_10px_rgba(184,41,255,0.6)]">${formatearPlata(totalAbonarNum)}</span>
+                                    <span class="block text-gray-400 text-[7px] font-bold uppercase tracking-widest mt-1">${totalAbonarLetras}</span>
+                                </div>
+                            </div>
+                            `}
+                        </div>
+                        <div class="bg-[#0b0a10] p-4 rounded-xl border border-[#2d2442]">
+                            <div class="flex justify-between items-end mb-2 border-b border-[#1c182b] pb-2">
+                                <h4 class="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Historial de Pagos</h4>
+                                <span class="bg-[#1c182b] text-[#b829ff] px-2 py-0.5 rounded text-[9px] font-black tracking-widest border border-[#3b2e59]">
+                                    ${esSoloAporte ? `Pagos registrados: ${p.cuotasPagadas}` : `${p.cuotasPagadas} / ${p.cuotasTotales}`}
+                                </span>
+                            </div>
+                            ${historialHTML}
+                        </div>
+                        ${(!fin) ? 
+                            `<button onclick="pedirPin('registrarPago', '${p.firebaseId}')" class="w-full btn-primary font-black text-sm py-4 rounded-xl active:scale-95 transition-transform uppercase tracking-widest">
+                                Asentar Pago 🔒
+                            </button>` : 
+                            `<div class="w-full text-center bg-[#0b0a10] text-[#10b981] font-black py-4 rounded-xl border border-[#065f46] uppercase tracking-widest text-[10px]">
+                                ✔️ Cuenta Liquidada
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `;
+            cambiarPantalla('detalle');
+        }
+
+        function renderizarCuadroTotal() {
+            const tbody = document.getElementById('cuerpo-tabla-total'); tbody.innerHTML = '';
+            if (prestamos.length === 0) return tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center font-bold text-gray-600 text-xs">Sin registros</td></tr>';
+
+            let mesActual = "";
+            prestamos.forEach(p => {
+                const mesStr = p.fechaInicio.split('/').length === 3 ? ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][parseInt(p.fechaInicio.split('/')[1]) - 1] + " " + p.fechaInicio.split('/')[2] : "FECHA";
+                const mes = mesStr.toUpperCase();
+                
+                if(mes !== mesActual) {
+                    tbody.innerHTML += `<tr><td colspan="4" class="p-3 bg-[#0b0a10] text-[9px] font-black text-gray-500 uppercase tracking-widest border-l-2 border-[#b829ff] pl-3">${mes}</td></tr>`;
+                    mesActual = mes;
+                }
+
+                const esSoloAporte = p.tipoSocio === 'aporte';
+                const fin = esSoloAporte ? false : p.cuotasPagadas >= p.cuotasTotales;
+                const claseEstado = fin ? 'text-gray-600' : 'text-[#b829ff] font-black';
+                
+                tbody.innerHTML += `
+                    <tr onclick="abrirFichaSocio('${p.firebaseId}')" class="hover:bg-[#14111d] transition-colors cursor-pointer border-b border-[#1c182b]">
+                        <td class="p-3 font-bold text-white flex items-center gap-2 text-xs">${p.socio}</td>
+                        <td class="p-3 text-gray-300 font-semibold text-xs">${esSoloAporte ? 'Fijo Recurrente' : formatearPlata(p.monto)}</td>
+                        <td class="p-3 text-gray-500 text-xs">${esSoloAporte ? '$ 300.000' : formatearPlata(p.cuotaMensual)}</td>
+                        <td class="p-3 ${claseEstado} text-xs">${esSoloAporte ? 'ACTIVO' : p.cuotasPagadas+'/'+p.cuotasTotales}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function formatearPlata(numero) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(numero); }
+        
+        function formatearMonedaEnVivo(input, idTexto) {
+            let valorLimpio = input.value.replace(/\D/g, "");
+            if (valorLimpio === "") { input.value = ""; if(idTexto && document.getElementById(idTexto)) document.getElementById(idTexto).innerText = ""; return; }
+            input.value = "$ " + new Intl.NumberFormat('es-AR').format(valorLimpio);
+            if(idTexto && document.getElementById(idTexto)) document.getElementById(idTexto).innerText = numeroALetras(parseInt(valorLimpio, 10));
+        }
+        
+        function numeroALetras(num) {
+            if (num === 0) return "CERO PESOS";
+            const u=["","UNO","DOS","TRES","CUATRO","CINCO","SEIS","SIETE","OCHO","NUEVE"], d10=["DIEZ","ONCE","DOCE","TRECE","CATORCE","QUINCE","DIECISEIS","DIECISIETE","DIECIOCHO","DIECINUEVE"], d=["","","VEINTE","TREINTA","CUARENTA","CINCUENTA","SESENTA","SETENTA","OCHENTA","NOVENTA"], c=["","CIENTO","DOSCIENTOS","TRESCIENTOS","CUATROCIENTOS","QUINIENTOS","SEISCIENTOS","SETECIENTOS","OCHOCIENTOS","NOVECIENTOS"];
+            function lD(n){if(n<10)return u[n];if(n<20)return d10[n-10];if(n===20)return"VEINTE";if(n<30)return"VEINTI"+u[n-20];return d[Math.floor(n/10)]+(n%10>0?" Y "+u[n%10]:"");}
+            function lC(n){if(n===100)return"CIEN";return c[Math.floor(n/100)]+(n%100>0?" "+lD(n%100):"");}
+            function lM(n){let m=Math.floor(n/1000),r=n%1000,res="";if(m===1)res="MIL";else if(m>1)res=lC(m)+" MIL";return res+(r>0?" "+lC(r):"");}
+            function lMi(n){let mi=Math.floor(n/1000000),r=n%1000000,res="";if(mi===1)res="UN MILLON";else if(mi>1)res=lC(mi)+" MILLONES";return res+(r>0?" "+lM(r):"");}
+            let l=""; if(num<1000)l=lC(num); else if(num<1000000)l=lM(num); else l=lMi(num);
+            return l.trim()+" PESOS";
+        }
+
+        window.cambiarPantalla = cambiarPantalla; window.pedirPin = pedirPin; window.cerrarModalPin = cerrarModalPin; window.verificarPin = verificarPin; window.cerrarModalEditar = cerrarModalEditar; window.guardarEdicion = guardarEdicion; window.renderizarCuadroTotal = renderizarCuadroTotal; window.formatearMonedaEnVivo = formatearMonedaEnVivo; window.abrirFichaSocio = abrirFichaSocio; window.autoCalcularCuota = autoCalcularCuota; window.cambiarModoFormulario = cambiarModoFormulario; window.buscarSocio = buscarSocio;
+    </script>
+</body>
+</html>
